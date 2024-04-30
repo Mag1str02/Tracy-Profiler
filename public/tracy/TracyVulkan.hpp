@@ -605,8 +605,13 @@ public:
         Profiler::QueueSerialFinish();
     }
 
+    tracy_force_inline VkCtxScope(VkCtxScope&& other) : m_active(other.m_active), m_ctx(other.m_ctx), m_cmdbuf(other.m_cmdbuf) {
+        other.m_ctx = nullptr;
+    }
+
     tracy_force_inline ~VkCtxScope()
     {
+        if (m_ctx == nullptr) return;
         if( !m_active ) return;
 
         const auto queryId = m_ctx->NextQueryId();
