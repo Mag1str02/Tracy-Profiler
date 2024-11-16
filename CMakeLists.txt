@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Run version helper script
-include(cmake/version.cmake)
+include(version.cmake)
 
 project(Tracy LANGUAGES CXX VERSION ${TRACY_VERSION_STRING})
 
