@@ -154,6 +154,44 @@
 #define ZoneScopedC( color ) ZoneNamedC( ___tracy_scoped_zone, color, true )
 #define ZoneScopedNC( name, color ) ZoneNamedNC( ___tracy_scoped_zone, name, color, true )
 
+
+namespace Detail {
+    template <std::string_view const&... Strs>
+    struct Join {
+        // Join all strings into a single std::array of chars
+        static constexpr auto Implementation() noexcept {
+            constexpr std::size_t     len = (Strs.size() + ... + 0);  // NOLINT
+            std::array<char, len + 1> arr{};
+            auto                      append = [i = 0, &arr](auto const& s) mutable {
+                for (auto c : s) arr[i++] = c;
+            };
+            (append(Strs), ...);
+            arr[len] = 0;
+            return arr;
+        }
+        // Give the joined string static storage
+        static constexpr auto arr = Implementation();  // NOLINT
+        // View as a std::string_view
+        static constexpr std::string_view value{arr.data(), arr.size() - 1};  // NOLINT
+    };
+    // Helper to get the value out
+    template <std::string_view const&... Strs>
+    static constexpr auto JoinValue = Join<Strs...>::value; // NOLINT
+
+    static constexpr std::string_view OpenBracket = " (";  // NOLINT
+    static constexpr std::string_view CloseBracket = " )"; // NOLINT
+    } // namespace Detail
+
+#define TRACY_FUNCTION_SCOPE() ZoneScopedN( std::source_location::current().function_name() )
+
+#define TRACY_FUNCTION_NAMED_SCOPE( name )                                                                             \
+        static constexpr std::string_view __function_name = std::source_location::current().function_name();           \
+        static constexpr std::string_view __name = name;                                                               \
+        static constexpr std::string_view __result = ::Detail::JoinValue<     \
+            __function_name, ::Detail::OpenBracket, __name,                   \
+            ::Detail::CloseBracket>;                                          \
+        ZoneScopedN( __result.data() )
+
 #define ZoneText( txt, size ) ___tracy_scoped_zone.Text( txt, size )
 #define ZoneTextV( varname, txt, size ) varname.Text( txt, size )
 #define ZoneTextF( fmt, ... ) ___tracy_scoped_zone.TextFmt( fmt, ##__VA_ARGS__ )
