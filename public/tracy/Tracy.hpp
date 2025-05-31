@@ -154,6 +154,7 @@
 #define ZoneScopedC( color ) ZoneNamedC( ___tracy_scoped_zone, color, true )
 #define ZoneScopedNC( name, color ) ZoneNamedNC( ___tracy_scoped_zone, name, color, true )
 
+#include <source_location>
 
 namespace Detail {
     template <std::string_view const&... Strs>
